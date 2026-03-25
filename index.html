@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>نظام التداول الإسلامي</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#07090f;--surf:#0f1623;--surf2:#151e2e;--brd:#1e2d45;--acc:#00d4aa;--acc2:#0ea5e9;--gold:#f59e0b;--red:#ef4444;--green:#22c55e;--txt:#dde4f0;--dim:#94a3b8;--muted:#4a5f7a;--font:'IBM Plex Sans Arabic',sans-serif;--mono:'JetBrains Mono',monospace;}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--txt);font-family:var(--font);font-size:14px}
+.shell{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
+.sidebar{background:var(--surf);border-left:1px solid var(--brd);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
+.logo{padding:20px 16px;border-bottom:1px solid var(--brd)}
+.logo-mark{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--acc),#007a62);display:flex;align-items:center;justify-content:center;font-size:19px;margin-bottom:10px}
+.logo h1{font-size:12.5px;font-weight:700;line-height:1.5}
+.logo span{font-size:11px;color:var(--acc)}
+.nav{flex:1;padding:10px 0}
+.ns{padding:10px 16px 4px;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted)}
+.ni{display:flex;align-items:center;gap:9px;padding:9px 16px;cursor:pointer;color:var(--dim);font-size:13px;font-weight:500;border-right:3px solid transparent;transition:.15s}
+.ni:hover{background:rgba(255,255,255,.03);color:var(--txt)}
+.ni.active{color:var(--acc);background:rgba(0,212,170,.07);border-right-color:var(--acc)}
+.ni .ic{font-size:15px;width:18px;text-align:center}
+.nbadge{background:var(--acc);color:#000;font-size:10px;font-weight:700;padding:2px 6px;border-radius:20px;margin-right:auto}
+.nbadge.warn{background:var(--gold)}
+.sf{padding:14px 16px;border-top:1px solid var(--brd)}
+.cap-widget{background:var(--surf2);border:1px solid var(--brd);border-radius:10px;padding:13px}
+.cap-widget .lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.cap-widget .amt{font-size:19px;font-weight:700;color:var(--acc);font-family:var(--mono);margin-top:3px}
+.cap-widget .sub{font-size:11px;color:var(--dim);margin-top:4px}
+.main{padding:26px;overflow-y:auto}
+.ph{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px;gap:12px;flex-wrap:wrap}
+.ph h2{font-size:21px;font-weight:700}
+.ph p{font-size:12px;color:var(--dim);margin-top:3px}
+.ph-right{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.pg{display:none}.pg.active{display:block;animation:fi .2s ease}
+@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.sg{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+.sc{background:var(--surf);border:1px solid var(--brd);border-radius:12px;padding:18px;position:relative;overflow:hidden}
+.sc .si{font-size:20px;margin-bottom:10px}
+.sc .sl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.sc .sv{font-size:25px;font-weight:700;font-family:var(--mono);margin-top:4px}
+.sc .ss{font-size:11px;color:var(--dim);margin-top:5px}
+.sc.ca .sv{color:var(--acc)}.sc.cg .sv{color:var(--green)}.sc.cgo .sv{color:var(--gold)}
+.card{background:var(--surf);border:1px solid var(--brd);border-radius:12px;overflow:hidden;margin-bottom:18px}
+.ch{padding:14px 18px;border-bottom:1px solid var(--brd);display:flex;align-items:center;justify-content:space-between}
+.ch h3{font-size:14px;font-weight:600}
+.cb{padding:18px}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{padding:9px 13px;text-align:right;font-size:10.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--brd);white-space:nowrap;background:rgba(0,0,0,.25)}
+td{padding:11px 13px;font-size:13px;border-bottom:1px solid rgba(30,45,69,.4);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.018)}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 15px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:.15s;font-family:var(--font)}
+.btn-p{background:var(--acc);color:#000}.btn-p:hover{background:#00bfaa}
+.btn-s{background:var(--surf2);color:var(--txt);border:1px solid var(--brd)}
+.btn-d{background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.2)}
+.btn-sm{padding:5px 10px;font-size:11px}
+.bs{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap}
+.bs-o{background:rgba(0,212,170,.1);color:var(--acc)}.bs-c{background:rgba(100,116,139,.15);color:var(--dim)}
+.bs-w{background:rgba(34,197,94,.1);color:var(--green)}.bs-l{background:rgba(239,68,68,.1);color:var(--red)}
+.bs-n{background:rgba(14,165,233,.1);color:var(--acc2)}.bs-h{background:rgba(245,158,11,.1);color:var(--gold)}
+.halal-y{display:inline-flex;font-size:11px;font-weight:600;color:var(--green);background:rgba(34,197,94,.08);padding:3px 7px;border-radius:20px}
+.halal-u{display:inline-flex;font-size:11px;font-weight:600;color:var(--muted);background:rgba(100,116,139,.1);padding:3px 7px;border-radius:20px}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.fg1{grid-template-columns:1fr}
+.frow{display:flex;flex-direction:column;gap:5px}
+.frow label{font-size:11.5px;font-weight:600;color:var(--dim)}
+.frow input,.frow select,.frow textarea{background:var(--surf2);border:1px solid var(--brd);border-radius:8px;color:var(--txt);padding:8px 11px;font-size:13px;font-family:var(--font);outline:none;transition:.15s}
+.frow input:focus,.frow select:focus,.frow textarea:focus{border-color:var(--acc)}
+.frow textarea{resize:vertical;min-height:75px}
+.cb-row{display:flex;align-items:center;gap:9px;cursor:pointer}
+.cb-row input[type=checkbox]{width:15px;height:15px;accent-color:var(--acc)}
+.cb-row span{font-size:13px;color:var(--dim)}
+.mo{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:500;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.mo.open{display:flex}
+.md{background:var(--surf);border:1px solid var(--brd);border-radius:14px;padding:26px;width:90%;max-width:640px;max-height:92vh;overflow-y:auto;position:relative}
+.md h3{font-size:17px;font-weight:700;margin-bottom:18px;padding-bottom:13px;border-bottom:1px solid var(--brd)}
+.mc{position:absolute;top:18px;left:18px;background:var(--surf2);border:1px solid var(--brd);border-radius:7px;width:30px;height:30px;cursor:pointer;font-size:15px;color:var(--txt);display:flex;align-items:center;justify-content:center}
+.mf{margin-top:18px;padding-top:14px;border-top:1px solid var(--brd);display:flex;gap:10px;justify-content:flex-end}
+.ss-sec{margin-bottom:16px}
+.ss-hd{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--acc);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--brd)}
+.sr{display:grid;grid-template-columns:1fr 90px;gap:10px;align-items:center;margin-bottom:8px}
+.sr label{font-size:12px;color:var(--dim);line-height:1.5}
+.sr small{font-size:10px;color:var(--muted);display:block;margin-top:1px}
+.sr input[type=number]{text-align:center;font-family:var(--mono);font-weight:600}
+.stotal{background:var(--surf2);border:2px solid var(--brd);border-radius:12px;padding:18px;text-align:center;transition:.3s}
+.stotal.pass{border-color:var(--green);background:rgba(34,197,94,.05)}
+.stotal.fail{border-color:var(--red);background:rgba(239,68,68,.05)}
+.stotal .sn{font-size:50px;font-weight:700;font-family:var(--mono)}
+.stotal.pass .sn{color:var(--green)}.stotal.fail .sn{color:var(--red)}
+.stotal .sv2{font-size:13px;font-weight:600;margin-top:6px}
+.ci{display:flex;align-items:flex-start;gap:9px;padding:9px 13px;border-radius:7px}
+.ci:hover{background:rgba(255,255,255,.02)}
+.ci input[type=checkbox]{width:16px;height:16px;accent-color:var(--acc);margin-top:1px;flex-shrink:0}
+.ci label{font-size:13px;color:var(--dim);cursor:pointer;line-height:1.5}
+.pbar{height:6px;background:var(--surf2);border-radius:3px;overflow:hidden}
+.pfill{height:100%;border-radius:3px;transition:width .6s;background:var(--acc)}
+.pr{font-family:var(--mono);font-weight:600}
+.pr-u{color:var(--green)}.pr-d{color:var(--red)}.pr-n{color:var(--dim)}
+.ri{display:flex;align-items:flex-start;gap:12px;padding:13px 0;border-bottom:1px solid var(--brd)}
+.ri:last-child{border-bottom:none}
+.rn{background:var(--acc);color:#000;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0}
+.rt{font-size:13px;line-height:1.6;color:var(--dim)}
+.tabs{display:flex;gap:3px;margin-bottom:18px;background:var(--surf2);padding:4px;border-radius:9px;width:fit-content}
+.tab{padding:7px 16px;border-radius:7px;cursor:pointer;font-size:13px;font-weight:500;color:var(--dim);transition:.15s}
+.tab.active{background:var(--acc);color:#000;font-weight:700}
+.calc-strip{background:var(--surf2);border-radius:9px;padding:12px;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;text-align:center;margin-top:13px}
+.cs-lbl{font-size:10px;color:var(--muted);margin-bottom:3px}
+.cs-val{font-family:var(--mono);font-weight:700;font-size:14px}
+.notif{position:fixed;bottom:22px;left:22px;background:var(--surf);border:1px solid var(--brd);border-radius:11px;padding:13px 18px;font-size:13px;z-index:9999;transform:translateY(80px);opacity:0;transition:.3s;min-width:260px;display:flex;align-items:center;gap:9px}
+.notif.show{transform:translateY(0);opacity:1}
+.notif.ok{border-color:var(--green)}.notif.err{border-color:var(--red)}
+.empty{text-align:center;padding:50px 20px;color:var(--muted)}
+.empty .ei{font-size:40px;margin-bottom:12px;opacity:.4}
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-thumb{background:var(--brd);border-radius:3px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+</style>
+</head>
+<body>
+<div class="shell">
+<aside class="sidebar">
+  <div class="logo"><div class="logo-mark">☪</div><h1>نظام التداول الإسلامي</h1><span>Swing Trading · NYSE / NASDAQ</span></div>
+  <nav class="nav">
+    <div class="ns">الرئيسية</div>
+    <div class="ni active" onclick="nav('dashboard',this)"><span class="ic">📊</span>لوحة التحكم</div>
+    <div class="ni" onclick="nav('watchlist',this)"><span class="ic">👁</span>قائمة المراقبة<span class="nbadge" id="wl-cnt">13</span></div>
+    <div class="ni" onclick="nav('scoring',this)"><span class="ic">🎯</span>تقييم الصفقات</div>
+    <div class="ns">الصفقات</div>
+    <div class="ni" onclick="nav('trades',this)"><span class="ic">💼</span>سجل الصفقات<span class="nbadge warn" id="open-badge">0</span></div>
+    <div class="ni" onclick="nav('checklist',this)"><span class="ic">✅</span>قائمة التحقق</div>
+    <div class="ns">مرجع</div>
+    <div class="ni" onclick="nav('rules',this)"><span class="ic">📜</span>القواعد الذهبية</div>
+    <div class="ni" onclick="nav('capital',this)"><span class="ic">💰</span>رأس المال</div>
+  </nav>
+  <div class="sf"><div class="cap-widget"><div class="lbl">رأس المال</div><div class="amt" id="sb-cap">$25,000</div><div class="sub">الهدف: $34,500 – $45,000</div></div></div>
+</aside>
+<main class="main">
+
+<div id="pg-dashboard" class="pg active">
+  <div class="ph"><div><h2>لوحة التحكم 📊</h2><p>نظرة شاملة على الأداء</p></div>
+    <div class="ph-right"><button class="btn btn-p" onclick="openM('m-trade')">＋ صفقة جديدة</button></div>
+  </div>
+  <div class="sg">
+    <div class="sc ca"><div class="si">💼</div><div class="sl">مفتوحة الآن</div><div class="sv" id="d-open">0</div><div class="ss">من أصل 4</div></div>
+    <div class="sc cg"><div class="si">📈</div><div class="sl">نسبة الفوز</div><div class="sv" id="d-wr">0%</div><div class="ss" id="d-closed">0 مغلقة</div></div>
+    <div class="sc cgo"><div class="si">💰</div><div class="sl">الربح / الخسارة</div><div class="sv" id="d-pl">$0</div><div class="ss">منذ البداية</div></div>
+    <div class="sc"><div class="si">⭐</div><div class="sl">متوسط النقاط</div><div class="sv" id="d-sc">0</div><div class="ss">من 100</div></div>
+  </div>
+  <div class="card">
+    <div class="ch"><h3>التقدم نحو الهدف</h3><span style="font-size:11px;color:var(--muted)">الهدف الواقعي $34,500</span></div>
+    <div class="cb">
+      <div class="g3" style="margin-bottom:14px">
+        <div><div style="font-size:11px;color:var(--muted);margin-bottom:3px">الحالي</div><div style="font-size:20px;font-weight:700;font-family:var(--mono);color:var(--acc)" id="d-cap">$25,000</div></div>
+        <div><div style="font-size:11px;color:var(--muted);margin-bottom:3px">الواقعي</div><div style="font-size:20px;font-weight:700;font-family:var(--mono);color:var(--green)">$34,500</div></div>
+        <div><div style="font-size:11px;color:var(--muted);margin-bottom:3px">المتفائل</div><div style="font-size:20px;font-weight:700;font-family:var(--mono);color:var(--gold)">$45,000</div></div>
+      </div>
+      <div class="pbar"><div class="pfill" id="d-prog" style="width:0%"></div></div>
+      <div style="text-align:left;font-size:11px;color:var(--muted);margin-top:5px" id="d-progpct">0%</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ch"><h3>آخر الصفقات</h3><button class="btn btn-s btn-sm" onclick="nav('trades',null)">الكل</button></div>
+    <div class="tw"><table>
+      <thead><tr><th>السهم</th><th>الدخول</th><th>الاستثمار</th><th>النقاط</th><th>الحالة</th><th>ربح/خسارة</th></tr></thead>
+      <tbody id="d-recent"><tr><td colspan="6" class="empty"><div class="ei">📭</div><p>لا توجد صفقات</p></td></tr></tbody>
+    </table></div>
+  </div>
+</div>
+
+<div id="pg-watchlist" class="pg">
+  <div class="ph"><div><h2>قائمة المراقبة 👁</h2><p>الأسهم المختارة</p></div><button class="btn btn-p" onclick="openM('m-wl')">＋ إضافة</button></div>
+  <div class="card"><div class="tw"><table>
+    <thead><tr><th>الرمز</th><th>الشركة</th><th>السعر</th><th>التنبيه</th><th>Musaffa</th><th>Zoya</th><th>الحالة</th><th></th></tr></thead>
+    <tbody id="wl-body"></tbody>
+  </table></div></div>
+</div>
+
+<div id="pg-scoring" class="pg">
+  <div class="ph"><div><h2>نظام التقييم 🎯</h2><p>الحد الأدنى: 70 نقطة — D2 إلزامي</p></div></div>
+  <div class="g2" style="align-items:start">
+    <div class="card"><div class="ch"><h3>احسب النقاط</h3></div><div class="cb">
+      <div class="frow" style="margin-bottom:14px"><label>رمز السهم</label><input id="sc-sym" placeholder="CSCO" style="text-transform:uppercase"></div>
+      <div class="ss-sec"><div class="ss-hd">أ — التحليل الفني (30 نقطة)</div>
+        <div class="sr"><label>A1: الهبوط 8%-15% من القمة<small>10=10-12% | 7=8-10% | 5=12-15%</small></label><input type="number" id="a1" min="0" max="10" value="0" oninput="calcSc()"></div>
+        <div class="sr"><label>A2: منطقة دعم واضحة<small>10=دعم قوي | 5=دعم ضعيف</small></label><input type="number" id="a2" min="0" max="10" value="0" oninput="calcSc()"></div>
+        <div class="sr"><label>A3: شمعة انعكاس قوية<small>10=ابتلاعية | 7=انعكاس عادي</small></label><input type="number" id="a3" min="0" max="10" value="0" oninput="calcSc()"></div>
+      </div>
+      <div class="ss-sec"><div class="ss-hd">ب — المؤشرات (25 نقطة)</div>
+        <div class="sr"><label>B1: RSI 30-45<small>10=30-38 | 7=38-45 | 3=خارج</small></label><input type="number" id="b1" min="0" max="10" value="0" oninput="calcSc()"></div>
+        <div class="sr"><label>B2: فوق SMA 50<small>10=فوق | 5=عند الخط</small></label><input type="number" id="b2" min="0" max="10" value="0" oninput="calcSc()"></div>
+        <div class="sr"><label>B3: حجم 150%+<small>5=حاد | 3=معتدل</small></label><input type="number" id="b3" min="0" max="5" value="0" oninput="calcSc()"></div>
+      </div>
+      <div class="ss-sec"><div class="ss-hd">ج — الأساسيات (25 نقطة)</div>
+        <div class="sr"><label>C1: الدين &lt;33%<small>10=&lt;15% | 7=15-25% | 5=25-33%</small></label><input type="number" id="c1s" min="0" max="10" value="0" oninput="calcSc()"></div>
+        <div class="sr"><label>C2: نمو الإيرادات<small>10=20%+ | 7=10-20% | 5=0-10%</small></label><input type="number" id="c2s" min="0" max="10" value="0" oninput="calcSc()"></div>
+        <div class="sr"><label>C3: المحللون<small>5=Strong Buy | 3=Buy | 0=Neutral</small></label><input type="number" id="c3s" min="0" max="5" value="0" oninput="calcSc()"></div>
+      </div>
+      <div class="ss-sec"><div class="ss-hd">د — السوق والشريعة (20 نقطة) ⚠️</div>
+        <div class="sr"><label>D1: VIX &lt;20<small>10=&lt;15 | 7=15-20 | 0=فوق 20</small></label><input type="number" id="d1s" min="0" max="10" value="0" oninput="calcSc()"></div>
+        <div class="sr"><label>D2: الشريعة (إلزامي)<small style="color:var(--red)">0 = رفض فوري</small></label><input type="number" id="d2s" min="0" max="10" step="10" value="0" oninput="calcSc()"></div>
+      </div>
+      <button class="btn btn-p" style="width:100%" onclick="saveSc()">💾 حفظ التقييم</button>
+    </div></div>
+    <div>
+      <div class="stotal fail" id="sc-card">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:6px">النقاط</div>
+        <div class="sn" id="sc-total">0</div>
+        <div class="sv2" id="sc-verdict">❌ لا تدخل</div>
+      </div>
+      <div class="card" style="margin-top:14px"><div class="ch"><h3>التفصيل</h3></div><div class="cb" style="padding:12px">
+        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--brd)"><span style="font-size:12px;color:var(--dim)">أ — الفني</span><span style="font-family:var(--mono);font-size:13px;font-weight:600" id="sb-a">0/30</span></div>
+        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--brd)"><span style="font-size:12px;color:var(--dim)">ب — المؤشرات</span><span style="font-family:var(--mono);font-size:13px;font-weight:600" id="sb-b">0/25</span></div>
+        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--brd)"><span style="font-size:12px;color:var(--dim)">ج — الأساسيات</span><span style="font-family:var(--mono);font-size:13px;font-weight:600" id="sb-c">0/25</span></div>
+        <div style="display:flex;justify-content:space-between;padding:8px 0"><span style="font-size:12px;color:var(--dim)">د — الشريعة</span><span style="font-family:var(--mono);font-size:13px;font-weight:600" id="sb-d">0/20</span></div>
+      </div></div>
+      <div class="card" style="margin-top:14px"><div class="ch"><h3>شروط الدخول ✔</h3></div>
+        <div class="cb" style="padding:12px;font-size:12.5px;color:var(--dim);line-height:2.2">
+          <div>1️⃣ هبوط 8%-15% من القمة</div><div>2️⃣ دعم تاريخي واضح</div>
+          <div>3️⃣ شمعة انعكاس بعد الإغلاق</div><div>4️⃣ حجم +150% عن المتوسط</div>
+          <div>5️⃣ نقاط ≥ 70</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="pg-trades" class="pg">
+  <div class="ph"><div><h2>سجل الصفقات 💼</h2><p>مفتوحة ومغلقة</p></div><button class="btn btn-p" onclick="openM('m-trade')">＋ صفقة جديدة</button></div>
+  <div class="tabs">
+    <div class="tab active" onclick="ftrades('all',this)">الكل</div>
+    <div class="tab" onclick="ftrades('open',this)">مفتوحة</div>
+    <div class="tab" onclick="ftrades('closed',this)">مغلقة</div>
+  </div>
+  <div class="card"><div class="tw"><table>
+    <thead><tr><th>السهم</th><th>الدخول</th><th>الاستثمار</th><th>وقف</th><th>هدف 1</th><th>هدف 2</th><th>نقاط</th><th>الحالة</th><th>ربح/خسارة</th><th></th></tr></thead>
+    <tbody id="tr-body"><tr><td colspan="10" class="empty"><div class="ei">📭</div><p>لا توجد صفقات</p></td></tr></tbody>
+  </table></div></div>
+</div>
+
+<div id="pg-checklist" class="pg">
+  <div class="ph"><div><h2>قائمة التحقق ✅</h2><p>يومياً قبل أي صفقة</p></div><button class="btn btn-p" onclick="saveCL()">💾 حفظ</button></div>
+  <div class="g2">
+    <div>
+      <div class="card"><div class="ch"><h3>أ — السوق</h3></div><div class="cb" style="padding:8px">
+        <div class="ci"><input type="checkbox" id="cl1"><label for="cl1">VIX تحت 20</label></div>
+        <div class="ci"><input type="checkbox" id="cl2"><label for="cl2">لا حدث كبير (NFP/CPI/FOMC)</label></div>
+        <div class="ci"><input type="checkbox" id="cl3"><label for="cl3">S&P 500 فوق SMA 50</label></div>
+      </div></div>
+      <div class="card"><div class="ch"><h3>ب — السهم</h3></div><div class="cb" style="padding:8px">
+        <div class="ci"><input type="checkbox" id="cl4"><label for="cl4">Musaffa وZoya كلاهما حلال</label></div>
+        <div class="ci"><input type="checkbox" id="cl5"><label for="cl5">الدين أقل من 33%</label></div>
+        <div class="ci"><input type="checkbox" id="cl6"><label for="cl6">هبط 8%-15% من القمة</label></div>
+        <div class="ci"><input type="checkbox" id="cl7"><label for="cl7">عند منطقة دعم تاريخية</label></div>
+        <div class="ci"><input type="checkbox" id="cl8"><label for="cl8">شمعة انعكاس بعد الإغلاق</label></div>
+        <div class="ci"><input type="checkbox" id="cl9"><label for="cl9">حجم +150%</label></div>
+        <div class="ci"><input type="checkbox" id="cl10"><label for="cl10">RSI بين 30-45</label></div>
+        <div class="ci"><input type="checkbox" id="cl11"><label for="cl11">فوق SMA 50</label></div>
+        <div class="ci"><input type="checkbox" id="cl12"><label for="cl12">لا أرباح خلال أسبوع</label></div>
+      </div></div>
+    </div>
+    <div>
+      <div class="card"><div class="ch"><h3>ج — النقاط والإعداد</h3></div><div class="cb" style="padding:8px">
+        <div class="ci"><input type="checkbox" id="cl13"><label for="cl13">النقاط ≥ 70</label></div>
+        <div class="ci"><input type="checkbox" id="cl14"><label for="cl14">لا 4 صفقات مفتوحة</label></div>
+        <div class="ci"><input type="checkbox" id="cl15"><label for="cl15">وقف الخسارة (-7%) مدخل</label></div>
+        <div class="ci"><input type="checkbox" id="cl16"><label for="cl16">الهدف 1 (+5%) والهدف 2 (+8%) محددان</label></div>
+      </div></div>
+      <div class="card" style="background:var(--surf2);text-align:center"><div class="cb" style="padding:22px">
+        <div style="font-size:10px;color:var(--muted);margin-bottom:7px">النتيجة</div>
+        <div style="font-size:42px;font-weight:700;font-family:var(--mono);color:var(--acc)" id="cl-score">0/16</div>
+        <div style="font-size:13px;margin-top:8px;color:var(--dim)" id="cl-verdict">أكمل القائمة</div>
+      </div></div>
+    </div>
+  </div>
+</div>
+
+<div id="pg-rules" class="pg">
+  <div class="ph"><div><h2>القواعد الذهبية 📜</h2><p>لا استثناءات</p></div></div>
+  <div class="g2">
+    <div class="card"><div class="ch"><h3>العشرة قواعد</h3></div><div class="cb" style="padding:16px">
+      <div class="ri"><div class="rn">1</div><div class="rt">لا تدخل صفقة تقل نقاطها عن 70 — مهما بدت مغرية</div></div>
+      <div class="ri"><div class="rn">2</div><div class="rt">لا تحرك وقف الخسارة للأسفل أبداً</div></div>
+      <div class="ri"><div class="rn">3</div><div class="rt">لا تعزز صفقة خاسرة — لا تصبح رابحة بالزيادة</div></div>
+      <div class="ri"><div class="rn">4</div><div class="rt">لا تدخل سهماً غير متحقق منه شرعياً</div></div>
+      <div class="ri"><div class="rn">5</div><div class="rt">لا تتداول عند VIX فوق 20</div></div>
+      <div class="ri"><div class="rn">6</div><div class="rt">لا تغير الأهداف أثناء الصفقة</div></div>
+      <div class="ri"><div class="rn">7</div><div class="rt">التزم بالسيولة بعد كل دورة — الصبر جزء من الاستراتيجية</div></div>
+      <div class="ri"><div class="rn">8</div><div class="rt">لا تدخل قبل الأرباح الفصلية</div></div>
+      <div class="ri"><div class="rn">9</div><div class="rt">سجل كل صفقة في بطاقة المتابعة</div></div>
+      <div class="ri"><div class="rn">10</div><div class="rt">راجع الاستراتيجية كل ثلاثة أشهر</div></div>
+    </div></div>
+    <div>
+      <div class="card"><div class="ch"><h3>دليل VIX</h3></div><div class="cb" style="padding:14px;display:flex;flex-direction:column;gap:9px">
+        <div style="display:flex;justify-content:space-between;padding:10px 13px;border-radius:8px;background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.15)"><span>VIX &lt; 15</span><span style="color:var(--green);font-weight:600;font-size:12px">دخول مفتوح ✅</span></div>
+        <div style="display:flex;justify-content:space-between;padding:10px 13px;border-radius:8px;background:rgba(14,165,233,.07);border:1px solid rgba(14,165,233,.15)"><span>15 – 20</span><span style="color:var(--acc2);font-weight:600;font-size:12px">مسموح مع حذر ⚠️</span></div>
+        <div style="display:flex;justify-content:space-between;padding:10px 13px;border-radius:8px;background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.15)"><span>20 – 25</span><span style="color:var(--gold);font-weight:600;font-size:12px">لا دخول 🔍</span></div>
+        <div style="display:flex;justify-content:space-between;padding:10px 13px;border-radius:8px;background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.15)"><span>25 – 30</span><span style="color:var(--red);font-weight:600;font-size:12px">أغلق الخاسرة 🚨</span></div>
+        <div style="display:flex;justify-content:space-between;padding:10px 13px;border-radius:8px;background:rgba(239,68,68,.14);border:1px solid rgba(239,68,68,.3)"><span>VIX &gt; 30</span><span style="color:var(--red);font-weight:700;font-size:12px">نقدية 100% ⛔</span></div>
+      </div></div>
+      <div class="card" style="margin-top:14px"><div class="ch"><h3>مسار الصفقة</h3></div><div class="cb" style="padding:14px">
+        <div style="display:flex;align-items:center;gap:5px;justify-content:space-between">
+          <div style="flex:1;text-align:center;background:var(--surf2);border-radius:8px;padding:10px;border:1px solid var(--brd)"><div style="font-size:9px;color:var(--muted)">دخول</div><div style="font-family:var(--mono);font-weight:700;font-size:13px;color:var(--txt);margin-top:2px">$100</div></div>
+          <span style="color:var(--muted);font-size:10px">→</span>
+          <div style="flex:1;text-align:center;background:rgba(239,68,68,.06);border-radius:8px;padding:10px;border:1px solid rgba(239,68,68,.2)"><div style="font-size:9px;color:var(--muted)">وقف</div><div style="font-family:var(--mono);font-weight:700;font-size:13px;color:var(--red);margin-top:2px">$93</div></div>
+          <span style="color:var(--muted);font-size:10px">→</span>
+          <div style="flex:1;text-align:center;background:rgba(34,197,94,.06);border-radius:8px;padding:10px;border:1px solid rgba(34,197,94,.2)"><div style="font-size:9px;color:var(--muted)">هدف 1</div><div style="font-family:var(--mono);font-weight:700;font-size:13px;color:var(--green);margin-top:2px">$105</div><div style="font-size:8px;color:var(--muted)">50%</div></div>
+          <span style="color:var(--muted);font-size:10px">→</span>
+          <div style="flex:1;text-align:center;background:rgba(0,212,170,.06);border-radius:8px;padding:10px;border:1px solid rgba(0,212,170,.2)"><div style="font-size:9px;color:var(--muted)">هدف 2</div><div style="font-family:var(--mono);font-weight:700;font-size:13px;color:var(--acc);margin-top:2px">$108</div><div style="font-size:8px;color:var(--muted)">50%</div></div>
+        </div>
+      </div></div>
+    </div>
+  </div>
+</div>
+
+<div id="pg-capital" class="pg">
+  <div class="ph"><div><h2>رأس المال 💰</h2><p>النمو التراكمي</p></div><button class="btn btn-p" onclick="addCap()">＋ تسجيل دورة</button></div>
+  <div class="g3" style="margin-bottom:18px">
+    <div class="card" style="text-align:center"><div class="cb"><div style="font-size:10px;color:var(--muted);margin-bottom:5px">الابتدائي</div><div style="font-size:22px;font-weight:700;font-family:var(--mono);color:var(--dim)">$25,000</div></div></div>
+    <div class="card" style="text-align:center"><div class="cb"><div style="font-size:10px;color:var(--muted);margin-bottom:5px">الحالي</div><div style="font-size:22px;font-weight:700;font-family:var(--mono);color:var(--acc)" id="cap-now">$25,000</div></div></div>
+    <div class="card" style="text-align:center"><div class="cb"><div style="font-size:10px;color:var(--muted);margin-bottom:5px">النمو</div><div style="font-size:22px;font-weight:700;font-family:var(--mono);color:var(--green)" id="cap-gr">+0%</div></div></div>
+  </div>
+  <div class="card"><div class="ch"><h3>التوقعات السنوية</h3></div><div class="tw"><table>
+    <thead><tr><th>المؤشر</th><th style="color:var(--gold)">متفائل</th><th style="color:var(--green)">واقعي</th><th style="color:var(--muted)">متحفظ</th></tr></thead>
+    <tbody>
+      <tr><td>نسبة الفوز</td><td style="font-family:var(--mono);color:var(--gold)">65%</td><td style="font-family:var(--mono);color:var(--green)">55%</td><td style="font-family:var(--mono);color:var(--muted)">40%</td></tr>
+      <tr><td>دورات سنوية</td><td style="font-family:var(--mono);color:var(--gold)">8</td><td style="font-family:var(--mono);color:var(--green)">7</td><td style="font-family:var(--mono);color:var(--muted)">6</td></tr>
+      <tr><td>السنة الأولى</td><td style="font-family:var(--mono);font-weight:700;color:var(--gold)">$45,000</td><td style="font-family:var(--mono);font-weight:700;color:var(--green)">$34,500</td><td style="font-family:var(--mono);font-weight:700;color:var(--muted)">$22,000</td></tr>
+      <tr><td>السنة الثالثة</td><td style="font-family:var(--mono);font-weight:700;color:var(--gold)">$250,000+</td><td style="font-family:var(--mono);font-weight:700;color:var(--green)">$120,000+</td><td style="font-family:var(--mono);font-weight:700;color:var(--muted)">$55,000+</td></tr>
+    </tbody>
+  </table></div></div>
+  <div class="card"><div class="ch"><h3>سجل رأس المال</h3></div><div class="tw"><table>
+    <thead><tr><th>التاريخ</th><th>رأس المال</th><th>الدورة</th><th>الوصف</th></tr></thead>
+    <tbody id="cap-body"></tbody>
+  </table></div></div>
+</div>
+
+</main>
+</div>
+
+<!-- MODALS -->
+<div class="mo" id="m-trade"><div class="md">
+  <button class="mc" onclick="closeM('m-trade')">✕</button>
+  <h3>📈 صفقة جديدة</h3>
+  <div class="fg">
+    <div class="frow"><label>الرمز *</label><input id="t-sym" placeholder="CSCO" style="text-transform:uppercase"></div>
+    <div class="frow"><label>الشركة</label><input id="t-co" placeholder="Cisco Systems"></div>
+    <div class="frow"><label>سعر الدخول * ($)</label><input type="number" id="t-ep" placeholder="78.50" step="0.01" oninput="calcTrade()"></div>
+    <div class="frow"><label>عدد الأسهم *</label><input type="number" id="t-sh" placeholder="32" oninput="calcTrade()"></div>
+    <div class="frow"><label>التاريخ</label><input type="date" id="t-dt"></div>
+    <div class="frow"><label>النقاط</label><input type="number" id="t-sc" placeholder="75" min="0" max="100"></div>
+    <div class="frow"><label>RSI</label><input type="number" id="t-rsi" placeholder="38"></div>
+    <div class="frow"><label>VIX</label><input type="number" id="t-vix" placeholder="16.5"></div>
+  </div>
+  <div style="display:flex;gap:16px;margin-top:12px;flex-wrap:wrap">
+    <label class="cb-row"><input type="checkbox" id="t-mus"><span>✅ Musaffa حلال</span></label>
+    <label class="cb-row"><input type="checkbox" id="t-zoy"><span>✅ Zoya حلال</span></label>
+    <label class="cb-row"><input type="checkbox" id="t-sma"><span>📈 فوق SMA 50</span></label>
+  </div>
+  <div class="calc-strip">
+    <div><div class="cs-lbl">الاستثمار</div><div class="cs-val" id="tc-inv" style="color:var(--acc2)">$0</div></div>
+    <div><div class="cs-lbl">وقف -7%</div><div class="cs-val" id="tc-sl" style="color:var(--red)">$0</div></div>
+    <div><div class="cs-lbl">هدف 1 +5%</div><div class="cs-val" id="tc-t1" style="color:var(--green)">$0</div></div>
+    <div><div class="cs-lbl">هدف 2 +8%</div><div class="cs-val" id="tc-t2" style="color:var(--acc)">$0</div></div>
+  </div>
+  <div class="mf"><button class="btn btn-s" onclick="closeM('m-trade')">إلغاء</button><button class="btn btn-p" onclick="saveTrade()">✅ تسجيل</button></div>
+</div></div>
+
+<div class="mo" id="m-wl"><div class="md" style="max-width:500px">
+  <button class="mc" onclick="closeM('m-wl')">✕</button>
+  <h3>👁 إضافة سهم</h3>
+  <div class="fg">
+    <div class="frow"><label>الرمز *</label><input id="w-sym" style="text-transform:uppercase"></div>
+    <div class="frow"><label>الشركة *</label><input id="w-co"></div>
+    <div class="frow"><label>السعر ($)</label><input type="number" id="w-pr" step="0.01"></div>
+    <div class="frow"><label>سعر التنبيه ($)</label><input type="number" id="w-al" step="0.01"></div>
+    <div class="frow"><label>الحالة</label><select id="w-st"><option>انتظار</option><option>قريب</option><option>عند الحد</option><option>مراقبة مشددة</option></select></div>
+  </div>
+  <div style="display:flex;gap:16px;margin-top:12px">
+    <label class="cb-row"><input type="checkbox" id="w-mus"><span>Musaffa حلال</span></label>
+    <label class="cb-row"><input type="checkbox" id="w-zoy"><span>Zoya حلال</span></label>
+  </div>
+  <div class="mf"><button class="btn btn-s" onclick="closeM('m-wl')">إلغاء</button><button class="btn btn-p" onclick="saveWL()">إضافة</button></div>
+</div></div>
+
+<div class="mo" id="m-close"><div class="md" style="max-width:440px">
+  <button class="mc" onclick="closeM('m-close')">✕</button>
+  <h3>🔒 إغلاق الصفقة</h3>
+  <div id="m-close-info" style="background:var(--surf2);border-radius:9px;padding:14px;margin-bottom:16px;font-size:13px;color:var(--dim)"></div>
+  <div class="fg1">
+    <div class="frow"><label>سعر الخروج ($) *</label><input type="number" id="cl-ep" step="0.01" oninput="calcClose()"></div>
+    <div class="frow"><label>النتيجة</label><div id="cl-result" style="font-family:var(--mono);font-size:16px;font-weight:700;padding:8px 0;color:var(--dim)">--</div></div>
+    <div class="frow"><label>الدرس</label><textarea id="cl-lesson" placeholder="ما الذي تعلمته؟"></textarea></div>
+  </div>
+  <div class="mf"><button class="btn btn-s" onclick="closeM('m-close')">إلغاء</button><button class="btn btn-p" onclick="confirmClose()">✅ تأكيد</button></div>
+</div></div>
+
+<div class="notif" id="notif"><span id="notif-ic">✅</span><span id="notif-txt">تم</span></div>
+
+<script>
+const DB={
+  get:k=>JSON.parse(localStorage.getItem(k)||'[]'),
+  set:(k,v)=>localStorage.setItem(k,JSON.stringify(v)),
+};
+if(!localStorage.getItem('watchlist')){DB.set('watchlist',[
+  {id:1,symbol:'CSCO',company:'Cisco Systems',current_price:78.90,alert_price:76.50,status:'قريب',halal_musaffa:1,halal_zoya:1},
+  {id:2,symbol:'MRK',company:'Merck & Co',current_price:119.83,alert_price:112.00,status:'انتظار',halal_musaffa:1,halal_zoya:1},
+  {id:3,symbol:'ABT',company:'Abbott Labs',current_price:113.50,alert_price:108.00,status:'انتظار',halal_musaffa:1,halal_zoya:1},
+  {id:4,symbol:'COP',company:'ConocoPhillips',current_price:117.64,alert_price:107.00,status:'انتظار',halal_musaffa:1,halal_zoya:1},
+  {id:5,symbol:'QCOM',company:'Qualcomm',current_price:152.36,alert_price:128.00,status:'انتظار',halal_musaffa:1,halal_zoya:1},
+  {id:6,symbol:'EOG',company:'EOG Resources',current_price:128.00,alert_price:115.00,status:'انتظار',halal_musaffa:1,halal_zoya:1},
+  {id:7,symbol:'JNJ',company:'Johnson & Johnson',current_price:148.00,alert_price:132.00,status:'انتظار',halal_musaffa:1,halal_zoya:1},
+  {id:8,symbol:'HON',company:'Honeywell',current_price:245.39,alert_price:225.00,status:'انتظار',halal_musaffa:1,halal_zoya:1},
+  {id:9,symbol:'PG',company:'Procter & Gamble',current_price:160.04,alert_price:150.00,status:'قريب',halal_musaffa:1,halal_zoya:1},
+  {id:10,symbol:'NVO',company:'Novo Nordisk',current_price:36.66,alert_price:36.00,status:'عند الحد',halal_musaffa:1,halal_zoya:0},
+  {id:11,symbol:'NVDA',company:'Nvidia',current_price:179.86,alert_price:170.00,status:'قريب',halal_musaffa:1,halal_zoya:1},
+  {id:12,symbol:'RBRK',company:'Rubrik Inc',current_price:53.67,alert_price:50.00,status:'مراقبة مشددة',halal_musaffa:0,halal_zoya:0},
+  {id:13,symbol:'ZETA',company:'Zeta Global',current_price:15.60,alert_price:15.00,status:'تأكد Zoya',halal_musaffa:1,halal_zoya:0}
+]);}
+if(!localStorage.getItem('capital')){DB.set('capital',[{id:1,record_date:new Date().toISOString().split('T')[0],capital:25000,cycle_number:0,description:'رأس المال الابتدائي'}]);}
+let closingTrade=null;
+function nav(n,el){document.querySelectorAll('.pg').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.ni').forEach(x=>x.classList.remove('active'));document.getElementById('pg-'+n).classList.add('active');if(el)el.classList.add('active');({dashboard:loadDash,watchlist:loadWL,trades:()=>loadTrades('all'),capital:loadCap}[n]||Function)();}
+function openM(id){document.getElementById(id).classList.add('open');}
+function closeM(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.mo').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');}));
+function notify(msg,type='ok'){const el=document.getElementById('notif');document.getElementById('notif-txt').textContent=msg;document.getElementById('notif-ic').textContent=type==='ok'?'✅':'❌';el.className='notif show '+(type==='ok'?'ok':'err');setTimeout(()=>el.classList.remove('show'),3000);}
+const f$=(s,n=2)=>'$'+parseFloat(s||0).toLocaleString('en-US',{minimumFractionDigits:n,maximumFractionDigits:n});
+const pct=v=>{const x=parseFloat(v||0);return(x>=0?'+':'')+x.toFixed(2)+'%';};
+const dt=d=>d?new Date(d).toLocaleDateString('ar-SA'):'--';
+function sbadge(s){const m={'مفتوحة':'bs-o','مغلقة':'bs-c','خرجت هدف2':'bs-w','خرجت هدف1':'bs-n','وقف خسارة':'bs-l'};return '<span class="bs '+(m[s]||'bs-c')+'">'+s+'</span>';}
+function hb(v){return v?'<span class="halal-y">✓</span>':'<span class="halal-u">؟</span>';}
+function loadDash(){
+  const tr=DB.get('trades'),op=tr.filter(t=>t.status==='مفتوحة').length,cl=tr.filter(t=>t.status!=='مفتوحة'),wi=cl.filter(t=>t.profit_loss>0).length;
+  const tpl=cl.reduce((s,t)=>s+(t.profit_loss||0),0),sc=tr.filter(t=>t.score),avg=sc.length?Math.round(sc.reduce((a,b)=>a+b.score,0)/sc.length):0;
+  const caps=DB.get('capital'),cap=caps.length?caps[caps.length-1].capital:25000;
+  document.getElementById('d-open').textContent=op;document.getElementById('d-wr').textContent=cl.length?((wi/cl.length)*100).toFixed(1)+'%':'0%';
+  document.getElementById('d-closed').textContent=cl.length+' مغلقة';
+  const plEl=document.getElementById('d-pl');plEl.textContent=f$(tpl);plEl.style.color=tpl>=0?'var(--green)':'var(--red)';
+  document.getElementById('d-sc').textContent=avg;document.getElementById('open-badge').textContent=op;
+  document.getElementById('sb-cap').textContent=f$(cap,0);document.getElementById('d-cap').textContent=f$(cap,0);
+  const prog=Math.max(0,Math.min(100,((cap-25000)/(34500-25000))*100));
+  document.getElementById('d-prog').style.width=prog+'%';document.getElementById('d-progpct').textContent=prog.toFixed(1)+'%';
+  const rc=[...tr].reverse().slice(0,6);
+  document.getElementById('d-recent').innerHTML=rc.length?rc.map(t=>'<tr><td><strong style="font-family:var(--mono);color:var(--acc)">'+t.symbol+'</strong></td><td style="color:var(--muted);font-size:12px">'+dt(t.entry_date)+'</td><td class="pr">'+f$(t.entry_price)+'</td><td><span style="font-family:var(--mono)">'+(t.score||'--')+'</span></td><td>'+sbadge(t.status)+'</td><td class="pr '+(t.profit_loss>0?'pr-u':t.profit_loss<0?'pr-d':'pr-n')+'">'+(t.profit_loss!=null?pct(t.profit_loss_pct):'--')+'</td></tr>').join(''):'<tr><td colspan="6" class="empty"><div class="ei">📭</div><p>لا توجد صفقات</p></td></tr>';
+}
+function loadWL(){
+  const data=DB.get('watchlist');document.getElementById('wl-cnt').textContent=data.length;
+  const stMap={'قريب':'bs-n','عند الحد':'bs-h','مراقبة مشددة':'bs-h','انتظار':'bs-c','تأكد Zoya':'bs-l'};
+  document.getElementById('wl-body').innerHTML=data.map(s=>'<tr><td><strong style="font-family:var(--mono);color:var(--acc)">'+s.symbol+'</strong></td><td>'+s.company+'</td><td class="pr">'+(s.current_price?f$(s.current_price):'--')+'</td><td class="pr pr-n">'+(s.alert_price?f$(s.alert_price):'--')+'</td><td>'+hb(s.halal_musaffa)+'</td><td>'+hb(s.halal_zoya)+'</td><td><span class="bs '+(stMap[s.status]||'bs-c')+'">'+s.status+'</span></td><td style="white-space:nowrap"><button class="btn btn-p btn-sm" onclick="quickTrade(''+s.symbol+'',''+s.company+'','+s.current_price+')">دخول</button> <button class="btn btn-d btn-sm" onclick="delWL('+s.id+')">✕</button></td></tr>').join('');
+}
+function quickTrade(sym,co,pr){document.getElementById('t-sym').value=sym;document.getElementById('t-co').value=co;document.getElementById('t-ep').value=pr||'';document.getElementById('t-dt').value=new Date().toISOString().split('T')[0];calcTrade();openM('m-trade');}
+function saveWL(){const sym=document.getElementById('w-sym').value.trim().toUpperCase(),co=document.getElementById('w-co').value.trim();if(!sym||!co){notify('يرجى إدخال الرمز والشركة','err');return;}const data=DB.get('watchlist'),id=data.length?Math.max(...data.map(d=>d.id))+1:1;data.push({id,symbol:sym,company:co,current_price:parseFloat(document.getElementById('w-pr').value)||null,alert_price:parseFloat(document.getElementById('w-al').value)||null,status:document.getElementById('w-st').value,halal_musaffa:document.getElementById('w-mus').checked?1:0,halal_zoya:document.getElementById('w-zoy').checked?1:0});DB.set('watchlist',data);closeM('m-wl');notify('تمت إضافة '+sym);loadWL();}
+function delWL(id){if(!confirm('حذف هذا السهم؟'))return;DB.set('watchlist',DB.get('watchlist').filter(w=>w.id!==id));notify('تم الحذف');loadWL();}
+function calcSc(){const a=+document.getElementById('a1').value + +document.getElementById('a2').value + +document.getElementById('a3').value,b=+document.getElementById('b1').value + +document.getElementById('b2').value + +document.getElementById('b3').value,c=+document.getElementById('c1s').value + +document.getElementById('c2s').value + +document.getElementById('c3s').value,d=+document.getElementById('d1s').value + +document.getElementById('d2s').value,total=a+b+c+d,d2=+document.getElementById('d2s').value,passed=total>=70&&d2===10;document.getElementById('sc-total').textContent=total;document.getElementById('sb-a').textContent=a+'/30';document.getElementById('sb-b').textContent=b+'/25';document.getElementById('sb-c').textContent=c+'/25';document.getElementById('sb-d').textContent=d+'/20';const card=document.getElementById('sc-card'),vrd=document.getElementById('sc-verdict');if(d2===0){card.className='stotal fail';vrd.textContent='⛔ مرفوض — شريعة';}else if(passed){card.className='stotal pass';vrd.textContent='✅ مقبول — ادخل';}else{card.className='stotal fail';vrd.textContent='❌ مرفوض — أقل من 70';}}
+function saveSc(){notify('تم حفظ التقييم — '+document.getElementById('sc-total').textContent+' نقطة');}
+let trFilter='all';
+function loadTrades(f){trFilter=f||trFilter;let tr=DB.get('trades');if(trFilter==='open')tr=tr.filter(t=>t.status==='مفتوحة');else if(trFilter==='closed')tr=tr.filter(t=>t.status!=='مفتوحة');tr=[...tr].reverse();document.getElementById('tr-body').innerHTML=tr.length?tr.map(t=>'<tr><td><strong style="font-family:var(--mono);color:var(--acc)">'+t.symbol+'</strong><br><small style="color:var(--muted)">'+(t.company||'')+'</small></td><td style="font-size:12px;color:var(--muted)">'+dt(t.entry_date)+'</td><td class="pr">'+f$(t.entry_price)+'<br><small style="color:var(--muted)">'+t.shares+' سهم</small></td><td class="pr pr-d">'+f$(t.stop_loss_price)+'</td><td class="pr pr-u">'+f$(t.target1_price)+'</td><td class="pr" style="color:var(--acc)">'+f$(t.target2_price)+'</td><td style="font-family:var(--mono);font-weight:700">'+(t.score||'--')+'</td><td>'+sbadge(t.status)+'</td><td class="pr '+(t.profit_loss>0?'pr-u':t.profit_loss<0?'pr-d':'pr-n')+'">'+(t.profit_loss!=null?f$(t.profit_loss):'--')+'</td><td style="white-space:nowrap">'+(t.status==='مفتوحة'?'<button class="btn btn-s btn-sm" onclick="openClose('+t.id+','+t.entry_price+','+t.shares+',''+t.symbol+'')">إغلاق</button>':'')+' <button class="btn btn-d btn-sm" onclick="delTrade('+t.id+')">✕</button></td></tr>').join(''):'<tr><td colspan="10" class="empty"><div class="ei">📭</div><p>لا توجد صفقات</p></td></tr>';}
+function ftrades(f,el){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');loadTrades(f);}
+function calcTrade(){const ep=parseFloat(document.getElementById('t-ep').value)||0,sh=parseInt(document.getElementById('t-sh').value)||0;document.getElementById('tc-inv').textContent=f$(ep*sh);document.getElementById('tc-sl').textContent=f$(ep*0.93);document.getElementById('tc-t1').textContent=f$(ep*1.05);document.getElementById('tc-t2').textContent=f$(ep*1.08);}
+function saveTrade(){const sym=document.getElementById('t-sym').value.trim().toUpperCase(),ep=parseFloat(document.getElementById('t-ep').value),sh=parseInt(document.getElementById('t-sh').value);if(!sym||!ep||!sh){notify('يرجى ملء الحقول المطلوبة','err');return;}const tr=DB.get('trades');if(tr.filter(t=>t.status==='مفتوحة').length>=4){notify('⚠️ الحد الأقصى 4 صفقات','err');return;}const id=tr.length?Math.max(...tr.map(d=>d.id))+1:1;tr.push({id,symbol:sym,company:document.getElementById('t-co').value,entry_price:ep,shares:sh,total_investment:ep*sh,target1_price:+(ep*1.05).toFixed(2),target2_price:+(ep*1.08).toFixed(2),stop_loss_price:+(ep*0.93).toFixed(2),entry_date:document.getElementById('t-dt').value||new Date().toISOString().split('T')[0],status:'مفتوحة',score:parseInt(document.getElementById('t-sc').value)||null,rsi_entry:parseFloat(document.getElementById('t-rsi').value)||null,vix_entry:parseFloat(document.getElementById('t-vix').value)||null,musaffa_pass:document.getElementById('t-mus').checked?1:0,zoya_pass:document.getElementById('t-zoy').checked?1:0,above_sma50:document.getElementById('t-sma').checked?1:0});DB.set('trades',tr);closeM('m-trade');notify('✅ تم تسجيل '+sym);loadTrades();loadDash();}
+function openClose(id,ep,sh,sym){closingTrade={id,ep,sh,sym};document.getElementById('m-close-info').innerHTML='<strong style="color:var(--acc);font-family:var(--mono)">'+sym+'</strong> · '+f$(ep)+' · '+sh+' سهم';document.getElementById('cl-ep').value='';document.getElementById('cl-result').textContent='--';document.getElementById('cl-lesson').value='';openM('m-close');}
+function calcClose(){if(!closingTrade)return;const xp=parseFloat(document.getElementById('cl-ep').value)||0;if(!xp)return;const pl=(xp-closingTrade.ep)*closingTrade.sh,plp=((xp-closingTrade.ep)/closingTrade.ep)*100,el=document.getElementById('cl-result');el.textContent=f$(pl)+' ('+pct(plp)+')';el.style.color=pl>=0?'var(--green)':'var(--red)';}
+function confirmClose(){if(!closingTrade)return;const xp=parseFloat(document.getElementById('cl-ep').value);if(!xp){notify('يرجى إدخال سعر الخروج','err');return;}const pl=(xp-closingTrade.ep)*closingTrade.sh,plp=((xp-closingTrade.ep)/closingTrade.ep)*100,tr=DB.get('trades'),t=tr.find(x=>x.id===closingTrade.id);if(t){t.status=pl>=0?'خرجت هدف2':'وقف خسارة';t.exit_date=new Date().toISOString().split('T')[0];t.exit_price=xp;t.exit_shares=closingTrade.sh;t.profit_loss=+pl.toFixed(2);t.profit_loss_pct=+plp.toFixed(2);t.lesson=document.getElementById('cl-lesson').value;}DB.set('trades',tr);closeM('m-close');notify((pl>=0?'✅ ربح ':'❌ خسارة ')+f$(Math.abs(pl)),pl>=0?'ok':'err');loadTrades();loadDash();}
+function delTrade(id){if(!confirm('حذف؟'))return;DB.set('trades',DB.get('trades').filter(t=>t.id!==id));notify('تم الحذف');loadTrades();loadDash();}
+function loadCap(){const data=DB.get('capital');if(data.length){const l=data[data.length-1].capital,gr=((l-25000)/25000*100).toFixed(1);document.getElementById('cap-now').textContent=f$(l,0);document.getElementById('cap-gr').textContent=(gr>=0?'+':'')+gr+'%';}document.getElementById('cap-body').innerHTML=[...DB.get('capital')].reverse().map(r=>'<tr><td style="color:var(--muted);font-size:12px">'+dt(r.record_date)+'</td><td class="pr" style="font-weight:700;font-size:15px">'+f$(r.capital,0)+'</td><td><span class="bs bs-c">دورة '+(r.cycle_number||0)+'</span></td><td>'+(r.description||'--')+'</td></tr>').join('');}
+function addCap(){const cap=parseFloat(prompt('رأس المال الجديد ($):'));if(!cap)return;const cycle=parseInt(prompt('رقم الدورة:')||'1'),desc=prompt('الوصف:')||'';const data=DB.get('capital'),id=data.length?Math.max(...data.map(d=>d.id))+1:1;data.push({id,record_date:new Date().toISOString().split('T')[0],capital:cap,cycle_number:cycle,description:desc});DB.set('capital',data);notify('✅ تم تسجيل رأس المال');loadCap();loadDash();}
+function updateCL(){let n=0;for(let i=1;i<=16;i++){const el=document.getElementById('cl'+i);if(el&&el.checked)n++;}document.getElementById('cl-score').textContent=n+'/16';const vrd=document.getElementById('cl-verdict');if(n===16){vrd.textContent='✅ جاهز للتداول';vrd.style.color='var(--green)';}else if(n>=12){vrd.textContent='⚠️ راجع الناقص';vrd.style.color='var(--gold)';}else{vrd.textContent='❌ لم تستوفِ الشروط';vrd.style.color='var(--red)';}}
+function saveCL(){notify('✅ تم حفظ قائمة التحقق ليوم '+new Date().toLocaleDateString('ar-SA'));}
+document.addEventListener('DOMContentLoaded',()=>{loadDash();for(let i=1;i<=16;i++){const el=document.getElementById('cl'+i);if(el)el.addEventListener('change',updateCL);}});
+</script>
+</body>
+</html>
