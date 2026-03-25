@@ -79,7 +79,7 @@ function loadWL(){
     html+='<td class="pr pr-n">'+(s.alert_price?f$(s.alert_price):'--')+'</td>';
     html+='<td>'+hb(s.halal_musaffa)+'</td><td>'+hb(s.halal_zoya)+'</td>';
     html+='<td><span class="bs '+stcls(s.status)+'">'+s.status+'</span></td>';
-    html+='<td><button class="btn btn-p btn-sm" onclick="quickTrade(''+s.symbol+'',''+s.company+'','+s.current_price+')">\u062f\u062e\u0648\u0644</button> <button class="btn btn-d btn-sm" onclick="delWL('+s.id+')">\u2715</button></td>';
+    html+='<td><button class="btn btn-p btn-sm" onclick="quickTrade(\'"+ s.symbol +"\',\'"+ s.company +"\',"+ s.current_price +")">\u062f\u062e\u0648\u0644</button> <button class="btn btn-d btn-sm" onclick="delWL('+s.id+')">\u2715</button></td>';
     html+='</tr>';
   });
   document.getElementById('wl-body').innerHTML=html;
