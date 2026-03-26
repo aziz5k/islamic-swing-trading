@@ -214,6 +214,38 @@ function updateCL(){
 }
 function saveCL(){notify('✅ تم حفظ قائمة التحقق ليوم '+new Date().toLocaleDateString('ar-SA'));}
 
+function refreshPrices() {
+  var data = DB.get('watchlist');
+  if (!data.length) { notify('لا توجد أسهم', 'err'); return; }
+  var btn = document.getElementById('refresh-btn');
+  if (btn) { btn.textContent = '⏳ جاري...'; btn.disabled = true; }
+  var symbols = data.map(function(s) { return s.symbol; }).join(',');
+  var url = 'https://query1.finance.yahoo.com/v7/finance/quote?symbols=' + symbols + '&fields=regularMarketPrice';
+  fetch(url)
+    .then(function(r) { return r.json(); })
+    .then(function(json) {
+      var quotes = json.quoteResponse && json.quoteResponse.result ? json.quoteResponse.result : [];
+      var updated = 0;
+      quotes.forEach(function(q) {
+        for (var i = 0; i < data.length; i++) {
+          if (data[i].symbol === q.symbol && q.regularMarketPrice) {
+            data[i].current_price = +q.regularMarketPrice.toFixed(2);
+            updated++;
+          }
+        }
+      });
+      DB.set('watchlist', data);
+      loadWL();
+      notify('✅ تم تحديث ' + updated + ' سهم');
+    })
+    .catch(function() {
+      notify('❌ تعذر الاتصال ب⁠ Yahoo Finance', 'err');
+    })
+    .finally(function() {
+      if (btn) { btn.textContent = '🔄 تحديث الأسعار'; btn.disabled = false; }
+    });
+}
+
 document.addEventListener('DOMContentLoaded',function(){
   loadDash();
   for(var i=1;i<=16;i++){var el=document.getElementById('cl'+i);if(el)el.addEventListener('change',updateCL);}
