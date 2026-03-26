@@ -220,18 +220,35 @@ function refreshPrices() {
   var btn = document.getElementById('refresh-btn');
   if (btn) { btn.textContent = '⏳ جاري...'; btn.disabled = true; }
 
+  // Multiple proxies - tried in order until one works
+  var PROXIES = [
+    function(url) { return 'https://corsproxy.io/?' + encodeURIComponent(url); },
+    function(url) { return 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url); },
+    function(url) { return 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(url); }
+  ];
+
   var symbols = data.map(function(s) { return s.symbol; });
   var updated = 0;
-  var total = symbols.length;
   var done = 0;
+  var total = symbols.length;
 
-  symbols.forEach(function(sym) {
+  function fetchWithFallback(sym, proxyIdx) {
+    if (proxyIdx >= PROXIES.length) {
+      // All proxies failed for this symbol
+      done++;
+      if (done === total) finalize();
+      return;
+    }
     var yahooUrl = 'https://query1.finance.yahoo.com/v8/finance/chart/' + sym + '?interval=1d&range=1d';
-    var proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(yahooUrl);
-    fetch(proxyUrl)
-      .then(function(r) { return r.json(); })
+    var url = PROXIES[proxyIdx](yahooUrl);
+    fetch(url)
+      .then(function(r) {
+        if (!r.ok) throw new Error('status ' + r.status);
+        return r.json();
+      })
       .then(function(d) {
-        var price = d && d.chart && d.chart.result && d.chart.result[0] && d.chart.result[0].meta && d.chart.result[0].meta.regularMarketPrice;
+        var price = d && d.chart && d.chart.result && d.chart.result[0] &&
+                    d.chart.result[0].meta && d.chart.result[0].meta.regularMarketPrice;
         if (price) {
           for (var i = 0; i < data.length; i++) {
             if (data[i].symbol === sym) {
@@ -240,267 +257,36 @@ function refreshPrices() {
               break;
             }
           }
+          done++;
+          if (done === total) finalize();
+        } else {
+          // Got response but no price - try next proxy
+          fetchWithFallback(sym, proxyIdx + 1);
         }
       })
-      .catch(function() {})
-      .finally(function() {
-        done++;
-        if (done === total) {
-          DB.set('watchlist', data);
-          loadWL();
-          notify('✅ تم تحديث ' + updated + ' سهم');
-          if (btn) { btn.textContent = '🔄 تحديث الأسعار'; btn.disabled = false; }
-        }
+      .catch(function() {
+        // This proxy failed - try next one
+        fetchWithFallback(sym, proxyIdx + 1);
       });
+  }
+
+  function finalize() {
+    DB.set('watchlist', data);
+    loadWL();
+    if (updated > 0) {
+      notify('✅ تم تحديث ' + updated + ' سهم');
+    } else {
+      notify('⚠️ تعذر تحديث الأسعار، جرب مرة أخرى', 'err');
+    }
+    if (btn) { btn.textContent = '🔄 تحديث الأسعار'; btn.disabled = false; }
+  }
+
+  // Start fetching all symbols
+  symbols.forEach(function(sym) {
+    fetchWithFallback(sym, 0);
   });
 }
-var DB = {
-  get: function(k) { return JSON.parse(localStorage.getItem(k) || '[]'); },
-  set: function(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
-};
 
-if (!localStorage.getItem('watchlist')) {
-  DB.set('watchlist', [
-    {id:1,symbol:'CSCO',company:'Cisco Systems',current_price:78.90,alert_price:76.50,status:'قريب',halal_musaffa:1,halal_zoya:1},
-    {id:2,symbol:'MRK',company:'Merck & Co',current_price:119.83,alert_price:112.00,status:'انتظار',halal_musaffa:1,halal_zoya:1},
-    {id:3,symbol:'ABT',company:'Abbott Labs',current_price:113.50,alert_price:108.00,status:'انتظار',halal_musaffa:1,halal_zoya:1},
-    {id:4,symbol:'COP',company:'ConocoPhillips',current_price:117.64,alert_price:107.00,status:'انتظار',halal_musaffa:1,halal_zoya:1},
-    {id:5,symbol:'QCOM',company:'Qualcomm',current_price:152.36,alert_price:128.00,status:'انتظار',halal_musaffa:1,halal_zoya:1},
-    {id:6,symbol:'EOG',company:'EOG Resources',current_price:128.00,alert_price:115.00,status:'انتظار',halal_musaffa:1,halal_zoya:1},
-    {id:7,symbol:'JNJ',company:'Johnson & Johnson',current_price:148.00,alert_price:132.00,status:'انتظار',halal_musaffa:1,halal_zoya:1},
-    {id:8,symbol:'HON',company:'Honeywell',current_price:245.39,alert_price:225.00,status:'انتظار',halal_musaffa:1,halal_zoya:1},
-    {id:9,symbol:'PG',company:'Procter & Gamble',current_price:160.04,alert_price:150.00,status:'قريب',halal_musaffa:1,halal_zoya:1},
-    {id:10,symbol:'NVO',company:'Novo Nordisk',current_price:36.66,alert_price:36.00,status:'عند الحد',halal_musaffa:1,halal_zoya:0},
-    {id:11,symbol:'NVDA',company:'Nvidia',current_price:179.86,alert_price:170.00,status:'قريب',halal_musaffa:1,halal_zoya:1},
-    {id:12,symbol:'RBRK',company:'Rubrik Inc',current_price:53.67,alert_price:50.00,status:'مراقبة مشددة',halal_musaffa:0,halal_zoya:0},
-    {id:13,symbol:'ZETA',company:'Zeta Global',current_price:15.60,alert_price:15.00,status:'تأكد Zoya',halal_musaffa:1,halal_zoya:0}
-  ]);
-}
-if (!localStorage.getItem('capital')) {
-  DB.set('capital', [{id:1,record_date:new Date().toISOString().split('T')[0],capital:25000,cycle_number:0,description:'رأس المال الابتدائي'}]);
-}
-
-var closingTrade = null;
-
-function openM(id){document.getElementById(id).classList.add('open');}
-function closeM(id){document.getElementById(id).classList.remove('open');}
-
-document.querySelectorAll('.mo').forEach(function(o){
-  o.addEventListener('click',function(e){if(e.target===o)o.classList.remove('open');});
-});
-
-function nav(n,el){
-  document.querySelectorAll('.pg').forEach(function(p){p.classList.remove('active');});
-  document.querySelectorAll('.ni').forEach(function(x){x.classList.remove('active');});
-  document.getElementById('pg-'+n).classList.add('active');
-  if(el)el.classList.add('active');
-  var map={dashboard:loadDash,watchlist:loadWL,trades:function(){loadTrades('all');},capital:loadCap};
-  if(map[n])map[n]();
-}
-
-function notify(msg,type){
-  type=type||'ok';
-  var el=document.getElementById('notif');
-  document.getElementById('notif-txt').textContent=msg;
-  document.getElementById('notif-ic').textContent=type==='ok'?'✅':'❌';
-  el.className='notif show '+(type==='ok'?'ok':'err');
-  setTimeout(function(){el.classList.remove('show');},3000);
-}
-
-function f$(s,n){n=(n===undefined)?2:n;return '$'+parseFloat(s||0).toLocaleString('en-US',{minimumFractionDigits:n,maximumFractionDigits:n});}
-function pct(v){var x=parseFloat(v||0);return(x>=0?'+':'')+x.toFixed(2)+'%';}
-function dtf(d){return d?new Date(d).toLocaleDateString('ar-SA'):'--';}
-
-function sbadge(s){
-  var m={'مفتوحة':'bs-o','مغلقة':'bs-c','خرجت هدفن2':'bs-w','خرجت هدفن1':'bs-n','وقف خسارة':'bs-l'};
-  return '<span class="bs '+(m[s]||'bs-c')+'">'+s+'</span>';
-}
-function hb(v){return v?'<span class="hy">✓</span>':'<span class="hu">؟</span>';}
-function stcls(st){
-  var m={'قريب':'bs-n','عند الحد':'bs-h','مراقبة مشددة':'bs-h','انتظار':'bs-c','تأكد Zoya':'bs-l'};
-  return m[st]||'bs-c';
-}
-
-function loadDash(){
-  var t=DB.get('trades');
-  var op=t.filter(function(x){return x.status==='مفتوحة';}).length;
-  var cl=t.filter(function(x){return x.status!=='مفتوحة';});
-  var wi=cl.filter(function(x){return x.profit_loss>0;}).length;
-  var tpl=cl.reduce(function(s,x){return s+(x.profit_loss||0);},0);
-  var sc=t.filter(function(x){return x.score;});
-  var avg=sc.length?Math.round(sc.reduce(function(a,b){return a+b.score;},0)/sc.length):0;
-  var caps=DB.get('capital'),cap=caps.length?caps[caps.length-1].capital:25000;
-  document.getElementById('d-open').textContent=op;
-  document.getElementById('d-wr').textContent=cl.length?((wi/cl.length)*100).toFixed(1)+'%':'0%';
-  document.getElementById('d-closed').textContent=cl.length+' مغلقة';
-  var pe=document.getElementById('d-pl');pe.textContent=f$(tpl);pe.style.color=tpl>=0?'var(--green)':'var(--red)';
-  document.getElementById('d-sc').textContent=avg;
-  document.getElementById('open-badge').textContent=op;
-  document.getElementById('sb-cap').textContent=f$(cap,0);
-  document.getElementById('d-cap').textContent=f$(cap,0);
-  document.getElementById('d-prog').style.width=Math.max(0,Math.min(100,((cap-25000)/(34500-25000))*100))+'%';
-  var rc=t.slice().reverse().slice(0,6);
-  document.getElementById('d-recent').innerHTML=rc.length?rc.map(function(x){
-    var pc=x.profit_loss>0?'pr-u':x.profit_loss<0?'pr-d':'pr-n';
-    return '<tr><td><strong style="font-family:var(--mono);color:var(--acc)">'+x.symbol+'</strong></td><td style="color:var(--muted);font-size:12px">'+dtf(x.entry_date)+'</td><td><span style="font-family:var(--mono)">'+(x.score||'--')+'</span></td><td>'+sbadge(x.status)+'</td><td class="pr '+pc+'">'+(x.profit_loss!=null?pct(x.profit_loss_pct):'--')+'</td></tr>';
-  }).join(''):'<tr><td colspan="5" class="empty"><div class="ei">📣</div><p>لا توجد صفقات</p></td></tr>';
-}
-
-function loadWL(){
-  var data=DB.get('watchlist');
-  document.getElementById('wl-cnt').textContent=data.length;
-  document.getElementById('wl-body').innerHTML=data.map(function(s){
-    return '<tr><td><strong style="font-family:var(--mono);color:var(--acc)">'+s.symbol+'</strong></td><td>'+s.company+'</td><td class="pr">'+(s.current_price?f$(s.current_price):'--')+'</td><td class="pr pr-n">'+(s.alert_price?f$(s.alert_price):'--')+'</td><td>'+hb(s.halal_musaffa)+'</td><td>'+hb(s.halal_zoya)+'</td><td><span class="bs '+stcls(s.status)+'">'+s.status+'</span></td><td><button class="btn btn-p btn-sm" data-sym="'+s.symbol+'" data-co="'+s.company+'" data-pr="'+s.current_price+'">دخول</button> <button class="btn btn-d btn-sm" data-del-wl="'+s.id+'">✕</button></td></tr>';
-  }).join('');
-}
-
-document.addEventListener('click',function(e){
-  var btn=e.target.closest('button');
-  if(!btn)return;
-  if(btn.dataset.sym)quickTrade(btn.dataset.sym,btn.dataset.co,parseFloat(btn.dataset.pr));
-  if(btn.dataset.delWl)delWL(parseInt(btn.dataset.delWl));
-  if(btn.dataset.closeId)openClose(parseInt(btn.dataset.closeId),parseFloat(btn.dataset.closeEp),parseInt(btn.dataset.closeSh),btn.dataset.closeSym);
-  if(btn.dataset.delTr)delTrade(parseInt(btn.dataset.delTr));
-});
-
-function quickTrade(sym,co,pr){
-  document.getElementById('t-sym').value=sym;
-  document.getElementById('t-co').value=co;
-  document.getElementById('t-ep').value=pr||'';
-  document.getElementById('t-dt').value=new Date().toISOString().split('T')[0];
-  calcTrade();openM('m-trade');
-}
-function saveWL(){
-  var sym=document.getElementById('w-sym').value.trim().toUpperCase(),co=document.getElementById('w-co').value.trim();
-  if(!sym||!co){notify('يرجى إدخال الرمز والشركة','err');return;}
-  var data=DB.get('watchlist'),id=data.length?Math.max.apply(null,data.map(function(d){return d.id;}))+1:1;
-  data.push({id:id,symbol:sym,company:co,current_price:parseFloat(document.getElementById('w-pr').value)||null,alert_price:parseFloat(document.getElementById('w-al').value)||null,status:document.getElementById('w-st').value,halal_musaffa:document.getElementById('w-mus').checked?1:0,halal_zoya:document.getElementById('w-zoy').checked?1:0});
-  DB.set('watchlist',data);closeM('m-wl');notify('تمتة إضافة '+sym);loadWL();
-}
-function delWL(id){if(!confirm('حذف؟'))return;DB.set('watchlist',DB.get('watchlist').filter(function(w){return w.id!==id;}));notify('تم الحذف');loadWL();}
-
-function calcSc(){
-  var a=+document.getElementById('a1').value + +document.getElementById('a2').value + +document.getElementById('a3').value;
-  var b=+document.getElementById('b1').value + +document.getElementById('b2').value + +document.getElementById('b3').value;
-  var c=+document.getElementById('c1s').value + +document.getElementById('c2s').value + +document.getElementById('c3s').value;
-  var d=+document.getElementById('d1s').value + +document.getElementById('d2s').value;
-  var total=a+b+c+d,d2=+document.getElementById('d2s').value;
-  document.getElementById('sc-total').textContent=total;
-  document.getElementById('sb-a').textContent=a+'/30';document.getElementById('sb-b').textContent=b+'/25';
-  document.getElementById('sb-c').textContent=c+'/25';document.getElementById('sb-d').textContent=d+'/20';
-  var card=document.getElementById('sc-card'),vrd=document.getElementById('sc-verdict');
-  if(d2===0){card.className='stotal fail';vrd.textContent='⛔ مرفوض';}
-  else if(total>=70&&d2===10){card.className='stotal pass';vrd.textContent='✅ مقبول';}
-  else{card.className='stotal fail';vrd.textContent='❌ أقل من 70';}
-}
-function saveSc(){notify('تم حفظ التقييم — '+document.getElementById('sc-total').textContent+' نقطة');}
-
-var trFilter='all';
-function loadTrades(f){
-  trFilter=f||trFilter;
-  var trades=DB.get('trades');
-  if(trFilter==='open')trades=trades.filter(function(t){return t.status==='مفتوحة';});
-  else if(trFilter==='closed')trades=trades.filter(function(t){return t.status!=='مفتوحة';});
-  trades=trades.slice().reverse();
-  document.getElementById('tr-body').innerHTML=trades.length?trades.map(function(t){
-    var pc=t.profit_loss>0?'pr-u':t.profit_loss<0?'pr-d':'pr-n';
-    var cb=t.status==='مفتوحة'?'<button class="btn btn-s btn-sm" data-close-id="'+t.id+'" data-close-ep="'+t.entry_price+'" data-close-sh="'+t.shares+'" data-close-sym="'+t.symbol+'">إغلاق</button> ':'';
-    return '<tr><td><strong style="font-family:var(--mono);color:var(--acc)">'+t.symbol+'</strong><br><small style="color:var(--muted)">'+(t.company||'')+'</small></td><td style="font-size:12px;color:var(--muted)">'+dtf(t.entry_date)+'</td><td class="pr pr-d">'+f$(t.stop_loss_price)+'</td><td class="pr pr-u">'+f$(t.target1_price)+'</td><td class="pr" style="color:var(--acc)">'+f$(t.target2_price)+'</td><td style="font-family:var(--mono)">'+(t.score||'--')+'</td><td>'+sbadge(t.status)+'</td><td class="pr '+pc+'">'+(t.profit_loss!=null?f$(t.profit_loss):'--')+'</td><td>'+cb+'<button class="btn btn-d btn-sm" data-del-tr="'+t.id+'">✕</button></td></tr>';
-  }).join(''):'<tr><td colspan="9" class="empty"><div class="ei">📣</div><p>لا توجد صفقات</p></td></tr>';
-}
-function ftrades(f,el){document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});el.classList.add('active');loadTrades(f);}
-function calcTrade(){
-  var ep=parseFloat(document.getElementById('t-ep').value)||0,sh=parseInt(document.getElementById('t-sh').value)||0;
-  document.getElementById('tc-inv').textContent=f$(ep*sh);
-  document.getElementById('tc-sl').textContent=f$(ep*0.93);
-  document.getElementById('tc-t1').textContent=f$(ep*1.05);
-  document.getElementById('tc-t2').textContent=f$(ep*1.08);
-}
-function saveTrade(){
-  var sym=document.getElementById('t-sym').value.trim().toUpperCase(),ep=parseFloat(document.getElementById('t-ep').value),sh=parseInt(document.getElementById('t-sh').value);
-  if(!sym||!ep||!sh){notify('يرجى ملء الحقول المطلوبة','err');return;}
-  var trades=DB.get('trades');
-  if(trades.filter(function(t){return t.status==='مفتوحة';}).length>=4){notify('⚠️ الحد الأقصى 4 صفقات','err');return;}
-  var id=trades.length?Math.max.apply(null,trades.map(function(d){return d.id;}))+1:1;
-  trades.push({id:id,symbol:sym,company:document.getElementById('t-co').value,entry_price:ep,shares:sh,total_investment:ep*sh,target1_price:+(ep*1.05).toFixed(2),target2_price:+(ep*1.08).toFixed(2),stop_loss_price:+(ep*0.93).toFixed(2),entry_date:document.getElementById('t-dt').value||new Date().toISOString().split('T')[0],status:'مفتوحة',score:parseInt(document.getElementById('t-sc').value)||null,rsi_entry:parseFloat(document.getElementById('t-rsi').value)||null,vix_entry:parseFloat(document.getElementById('t-vix').value)||null,musaffa_pass:document.getElementById('t-mus').checked?1:0,zoya_pass:document.getElementById('t-zoy').checked?1:0});
-  DB.set('trades',trades);closeM('m-trade');notify('✅ تم تسجيل '+sym);loadTrades();loadDash();
-}
-function openClose(id,ep,sh,sym){
-  closingTrade={id:id,ep:ep,sh:sh,sym:sym};
-  document.getElementById('m-close-info').innerHTML='<strong style="color:var(--acc);font-family:var(--mono)">'+sym+'</strong> · '+f$(ep)+' · '+sh+' سهم';
-  document.getElementById('cl-ep').value='';document.getElementById('cl-result').textContent='--';document.getElementById('cl-lesson').value='';
-  openM('m-close');
-}
-function calcClose(){
-  if(!closingTrade)return;
-  var xp=parseFloat(document.getElementById('cl-ep').value)||0;if(!xp)return;
-  var pl=(xp-closingTrade.ep)*closingTrade.sh,plp=((xp-closingTrade.ep)/closingTrade.ep)*100;
-  var el=document.getElementById('cl-result');el.textContent=f$(pl)+' ('+pct(plp)+')';el.style.color=pl>=0?'var(--green)':'var(--red)';
-}
-function confirmClose(){
-  if(!closingTrade)return;
-  var xp=parseFloat(document.getElementById('cl-ep').value);
-  if(!xp){notify('يرجى إدخال سعر الخروج','err');return;}
-  var pl=(xp-closingTrade.ep)*closingTrade.sh,plp=((xp-closingTrade.ep)/closingTrade.ep)*100;
-  var trades=DB.get('trades');
-  for(var i=0;i<trades.length;i++){if(trades[i].id===closingTrade.id){trades[i].status=pl>=0?'خرجت هدفن2':'وقف خسارة';trades[i].exit_date=new Date().toISOString().split('T')[0];trades[i].exit_price=xp;trades[i].profit_loss=+pl.toFixed(2);trades[i].profit_loss_pct=+plp.toFixed(2);trades[i].lesson=document.getElementById('cl-lesson').value;break;}}
-  DB.set('trades',trades);closeM('m-close');notify((pl>=0?'✅ ربح ':'❌ خسارة ')+f$(Math.abs(pl)),pl>=0?'ok':'err');loadTrades();loadDash();
-}
-function delTrade(id){if(!confirm('حذف؟'))return;DB.set('trades',DB.get('trades').filter(function(t){return t.id!==id;}));notify('تم الحذف');loadTrades();loadDash();}
-
-function loadCap(){
-  var data=DB.get('capital');
-  if(data.length){var l=data[data.length-1].capital,gr=((l-25000)/25000*100).toFixed(1);document.getElementById('cap-now').textContent=f$(l,0);document.getElementById('cap-gr').textContent=(gr>=0?'+':'')+gr+'%';}
-  document.getElementById('cap-body').innerHTML=data.slice().reverse().map(function(r){return '<tr><td style="color:var(--muted);font-size:12px">'+dtf(r.record_date)+'</td><td class="pr" style="font-weight:700;font-size:15px">'+f$(r.capital,0)+'</td><td><span class="bs bs-c">دورة '+(r.cycle_number||0)+'</span></td><td>'+(r.description||'--')+'</td></tr>';}).join('');
-}
-function addCap(){
-  var cap=parseFloat(prompt('رأس المال الجديد ($):'));if(!cap)return;
-  var cycle=parseInt(prompt('رقم الدورة:')||'1'),desc=prompt('الوصف:')||'';
-  var data=DB.get('capital'),id=data.length?Math.max.apply(null,data.map(function(d){return d.id;}))+1:1;
-  data.push({id:id,record_date:new Date().toISOString().split('T')[0],capital:cap,cycle_number:cycle,description:desc});
-  DB.set('capital',data);notify('✅ تم تسجيل رأس المال');loadCap();loadDash();
-}
-function updateCL(){
-  var n=0;for(var i=1;i<=16;i++){var el=document.getElementById('cl'+i);if(el&&el.checked)n++;}
-  document.getElementById('cl-score').textContent=n+'/16';
-  var vrd=document.getElementById('cl-verdict');
-  if(n===16){vrd.textContent='✅ جاهز للتداول';vrd.style.color='var(--green)';}
-  else if(n>=12){vrd.textContent='⚠️ راجع الناقص';vrd.style.color='var(--gold)';}
-  else{vrd.textContent='❌ لم تستوفِ الشروط';vrd.style.color='var(--red)';}
-}
-function saveCL(){notify('✅ تم حفظ قائمة التحقق ليوم '+new Date().toLocaleDateString('ar-SA'));}
-
-function refreshPrices() {
-  var data = DB.get('watchlist');
-  if (!data.length) { notify('لا توجد أسهم', 'err'); return; }
-  var btn = document.getElementById('refresh-btn');
-  if (btn) { btn.textContent = '⏳ جاري...'; btn.disabled = true; }
-  var symbols = data.map(function(s) { return s.symbol; }).join(',');
-  var url = 'https://query1.finance.yahoo.com/v7/finance/quote?symbols=' + symbols + '&fields=regularMarketPrice';
-  fetch(url)
-    .then(function(r) { return r.json(); })
-    .then(function(json) {
-      var quotes = json.quoteResponse && json.quoteResponse.result ? json.quoteResponse.result : [];
-      var updated = 0;
-      quotes.forEach(function(q) {
-        for (var i = 0; i < data.length; i++) {
-          if (data[i].symbol === q.symbol && q.regularMarketPrice) {
-            data[i].current_price = +q.regularMarketPrice.toFixed(2);
-            updated++;
-          }
-        }
-      });
-      DB.set('watchlist', data);
-      loadWL();
-      notify('✅ تم تحديث ' + updated + ' سهم');
-    })
-    .catch(function() {
-      notify('❌ تعذر الاتصال ب⁠ Yahoo Finance', 'err');
-    })
-    .finally(function() {
-      if (btn) { btn.textContent = '🔄 تحديث الأسعار'; btn.disabled = false; }
-    });
-}
 
 document.addEventListener('DOMContentLoaded',function(){
   loadDash();
